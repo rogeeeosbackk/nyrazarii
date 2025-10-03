@@ -28,7 +28,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
   };
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    e.currentTarget.src = '/assets/placeholder.jpg';
+    e.currentTarget.src = '/placeholder.svg';
   };
 
   return (
@@ -129,7 +129,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
               {product.offerPrice ? (
                 <>
                   <div className="text-2xl font-bold text-primary">
-                    ${product.offerPrice.toLocaleString()}
+                    ₹{product.offerPrice.toLocaleString()}
                   </div>
                   <div className="text-sm text-muted-foreground line-through">
                     ₹{product.price.toLocaleString()}

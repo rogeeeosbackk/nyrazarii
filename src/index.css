@@ -65,6 +65,14 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Missing destructive colors */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Missing popover colors */
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
   }
 
   /* Dark mode (premium dark theme) */
@@ -91,6 +99,13 @@
     --border: 0 0% 15%;
     --input: 0 0% 8%;
     --ring: 45 100% 51%;
+
+    /* Dark mode destructive and popover colors */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 95%;
   }
 }
 

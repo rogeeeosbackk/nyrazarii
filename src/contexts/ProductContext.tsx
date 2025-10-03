@@ -62,30 +62,91 @@ const initialProducts: Product[] = [
 ];
 
 export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(() => {
-    // Try loading from localStorage first
-    const stored = localStorage.getItem('nyrazari-products');
-    return stored ? JSON.parse(stored) : initialProducts;
-  });
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [loadedFromServer, setLoadedFromServer] = useState(false);
 
-  // Persist products to localStorage on change
+  // If hosting frontend on GitHub Pages, point VITE_API_BASE to your Vercel API
+  const apiBase: string = (import.meta as any).env?.VITE_API_BASE || '/api/products';
+
+  // Load products: try server, then localStorage, then initial
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const res = await fetch(apiBase, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled && Array.isArray(data) && data.length) {
+            setProducts(data);
+            setLoadedFromServer(true);
+            return;
+          }
+        }
+      } catch (_) {
+        // ignore and fallback
+      }
+
+      const stored = localStorage.getItem('nyrazari-products');
+      if (!cancelled && stored) {
+        try {
+          setProducts(JSON.parse(stored));
+        } catch (_) {
+          setProducts(initialProducts);
+        }
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Persist to localStorage so the site still works offline
   useEffect(() => {
     localStorage.setItem('nyrazari-products', JSON.stringify(products));
   }, [products]);
 
-  const addProduct = (productData: Omit<Product, 'id'>) => {
-    const newProduct: Product = { ...productData, id: Date.now().toString() };
-    setProducts(prev => [...prev, newProduct]);
+  const addProduct = async (productData: Omit<Product, 'id'>) => {
+    // Optimistic update; server will return canonical product with id
+    try {
+      const res = await fetch(apiBase, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productData),
+      });
+      if (res.ok) {
+        const created: Product = await res.json();
+        setProducts(prev => [...prev, created]);
+        return;
+      }
+    } catch (_) {}
+    // Fallback local if server unavailable
+    const local: Product = { ...productData, id: Date.now().toString() };
+    setProducts(prev => [...prev, local]);
   };
 
-  const updateProduct = (id: string, updates: Partial<Product>) => {
-    setProducts(prev =>
-      prev.map(product => (product.id === id ? { ...product, ...updates } : product))
-    );
+  const updateProduct = async (id: string, updates: Partial<Product>) => {
+    setProducts(prev => prev.map(p => (p.id === id ? { ...p, ...updates } : p)));
+    try {
+      await fetch(apiBase, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, updates }),
+      });
+    } catch (_) {}
   };
 
-  const deleteProduct = (id: string) => {
-    setProducts(prev => prev.filter(product => product.id !== id));
+  const deleteProduct = async (id: string) => {
+    setProducts(prev => prev.filter(p => p.id !== id));
+    try {
+      await fetch(apiBase, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+    } catch (_) {}
   };
 
   const getProductById = (id: string) => products.find(product => product.id === id);
