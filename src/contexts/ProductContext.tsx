@@ -65,16 +65,27 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loadedFromServer, setLoadedFromServer] = useState(false);
 
-  // If hosting frontend on GitHub Pages, point VITE_API_BASE to your Vercel API
-  const apiBase: string = (import.meta as any).env?.VITE_API_BASE || '/api/products';
+  // API base can be supplied by env or public config.json for GH Pages
+  const [apiBase, setApiBase] = useState<string>((import.meta as any).env?.VITE_API_BASE || '/api/products');
 
-  // Load products: try server, then localStorage, then initial
+  // Load dynamic config for GH Pages, then load products
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
+      // Try to load public config.json
       try {
-        const res = await fetch(apiBase, { cache: 'no-store' });
+        const cfgRes = await fetch('/config.json', { cache: 'no-store' });
+        if (cfgRes.ok) {
+          const cfg = await cfgRes.json();
+          if (cfg && typeof cfg.apiBase === 'string' && cfg.apiBase) {
+            setApiBase(cfg.apiBase);
+          }
+        }
+      } catch (_) {}
+
+      try {
+        const res = await fetch(((import.meta as any).env?.VITE_API_BASE || '/api/products'), { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (!cancelled && Array.isArray(data) && data.length) {

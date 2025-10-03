@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting...</title>
+    <meta http-equiv="refresh" content="0; url=./index.html" />
+    <script>
+      // GitHub Pages SPA redirect to index.html with path preserved in hash
+      (function() {
+        var l = window.location;
+        var redirect = l.protocol + '//' + l.host + l.pathname.replace(/404.html$/, '') + 'index.html' + (l.search || '') + (l.hash || '');
+        window.location.replace(redirect);
+      })();
+    </script>
+  </head>
+  <body>
+    Redirecting to the app...
+  </body>
+  </html>
+
+
